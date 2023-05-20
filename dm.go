@@ -11,13 +11,7 @@ import (
 	"time"
 )
 
-type Module struct{}
-
-func (d Module) Name() string {
-	return "tydm"
-}
-
-func (d *Module) Register(name string, dsn string) (err error) {
+func Register(name string, dsn string) (err error) {
 	if dsn == "" {
 		return errx.New("no dameng database config")
 	}
@@ -36,9 +30,5 @@ func (d *Module) Register(name string, dsn string) (err error) {
 		return
 	}
 	application.RegisterDatabase(name, db)
-	return nil
-}
-
-func (d Module) Boot() error {
 	return nil
 }

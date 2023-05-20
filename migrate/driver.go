@@ -4,11 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/zedisdog/tydm/dm/sqldriver"
-	"io"
 )
+
+func init() {
+	database.Register("dm", &Dm{})
+}
 
 var _ database.Driver = (*Dm)(nil)
 

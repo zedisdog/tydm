@@ -17,8 +17,7 @@ func (d Module) Name() string {
 	return "tydm"
 }
 
-func (d *Module) Register() (err error) {
-	dsn := application.Config().GetString("database.dm.dsn")
+func (d *Module) Register(name string, dsn string) (err error) {
 	if dsn == "" {
 		return errx.New("no dameng database config")
 	}
@@ -36,7 +35,7 @@ func (d *Module) Register() (err error) {
 	if err != nil {
 		return
 	}
-	application.RegisterDatabase("dm", db)
+	application.RegisterDatabase(name, db)
 	return nil
 }
 

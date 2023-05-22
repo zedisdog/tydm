@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io"
-
-	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/zedisdog/tydm/dm/sqldriver"
+	"io"
 )
 
 func init() {
@@ -85,7 +83,7 @@ func (d Dm) SetVersion(version int, dirty bool) (err error) {
 		return
 	}
 
-	query := fmt.Sprintf("DELETE FROM %s;", d.MigrationsTable)
+	query := fmt.Sprintf(`DELETE FROM "%s";`, d.MigrationsTable)
 	if _, err = tx.Exec(query); err != nil {
 		tx.Rollback()
 		return
@@ -95,7 +93,7 @@ func (d Dm) SetVersion(version int, dirty bool) (err error) {
 	// empty schema version for failed down migration on the first migration
 	// See: https://github.com/golang-migrate/migrate/issues/330
 	if version >= 0 || (version == database.NilVersion && dirty) {
-		query := fmt.Sprintf("INSERT INTO %s (version, dirty) VALUES (?, ?)", d.MigrationsTable)
+		query := fmt.Sprintf(`INSERT INTO "%s" (version, dirty) VALUES (?, ?)`, d.MigrationsTable)
 		if _, err = tx.Exec(query, version, dirty); err != nil {
 			tx.Rollback()
 			return
@@ -107,19 +105,11 @@ func (d Dm) SetVersion(version int, dirty bool) (err error) {
 }
 
 func (d Dm) Version() (version int, dirty bool, err error) {
-	query := fmt.Sprintf("SELECT version, dirty FROM %s LIMIT 1", d.MigrationsTable)
+	query := fmt.Sprintf(`SELECT version, dirty FROM "%s" LIMIT 1`, d.MigrationsTable)
 	err = d.db.QueryRow(query).Scan(&version, &dirty)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return database.NilVersion, false, nil
-	}
-
-	if err != nil {
-		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 0 {
-			return database.NilVersion, false, nil
-		}
-	} else {
-		return 0, false, err
 	}
 
 	return
@@ -161,7 +151,7 @@ func (d Dm) Drop() (err error) {
 	defer d.foreignKeyCheck(true)
 
 	for _, table := range tables {
-		query = fmt.Sprintf(`DROP TABLE IF EXISTS %s`, table)
+		query = fmt.Sprintf(`DROP TABLE IF EXISTS "%s"`, table)
 		_, err = d.db.Exec(query)
 		if err != nil {
 			return
@@ -242,7 +232,7 @@ func (d Dm) ensureVersionTable() (err error) {
 	}
 
 	if count == 0 {
-		query := fmt.Sprintf(`CREATE TABLE %s (version BIGINT NOT NULL, dirty TINYINT NOT NULL, PRIMARY KEY(version));`, d.MigrationsTable)
+		query := fmt.Sprintf(`CREATE TABLE "%s" (version BIGINT NOT NULL, dirty TINYINT NOT NULL, PRIMARY KEY(version));`, d.MigrationsTable)
 		_, err = d.db.Exec(query)
 		if err != nil {
 			return
